@@ -2,7 +2,13 @@
 Free Open Source Minesweeper
 
 ## Parameters
-In the Main class: the height and width of the board, along with the number of mines on the board.
+* In Main: 
+  * the height of the board 
+  * the width of the board 
+  * the number of mines on the board
+
+* In Grid:
+  * the size of each square in pixels
 
 ## Controls
 * Left Click to Reveal Tile 
