@@ -24,9 +24,9 @@ public class MineSweeper extends Canvas implements Runnable {
 
 	public static final String			name				= "MineSweeper";
 
-	private static Mouse				mouseInput			= new Mouse(grid);
+	private static final Mouse			mouseInput			= new Mouse(grid);
 
-	public static boolean				debug				= false;
+	public static final boolean			debug				= false;
 
 	public static void main(final String[ ] args) {
 
@@ -55,7 +55,7 @@ public class MineSweeper extends Canvas implements Runnable {
 		}
 
 		try {
-			thread.join( );
+			thread.join(1000);
 			System.exit(0);
 		} catch (Exception e) {
 			e.printStackTrace( );
@@ -105,14 +105,16 @@ public class MineSweeper extends Canvas implements Runnable {
 			fps++;
 
 			if ((lastPrint + 1000) < System.currentTimeMillis( )) {
-				final String lastSec = " | UPS: " + ups + " | FPS: " + fps;
 
+				final String lastSec = " | UPS: " + ups + " | FPS: " + fps;
 				final String basePrint = name + " (" + grid.getSizeX( ) + ", " + grid.getSizeY( ) + ") | Flags Used: " + grid.getFlagsUsed( ) + " | Mines: " + grid.getNumMines( ) + " | " + String.format("%.2f", grid.percentComplete( )) + "% Complete";
+
 				if (debug) {
 					frame.setTitle(basePrint + lastSec);
 				} else {
 					frame.setTitle(basePrint);
 				}
+
 				fps = 0;
 				ups = 0;
 				lastPrint += 1000;
