@@ -6,11 +6,11 @@ import java.awt.image.BufferStrategy;
 
 import javax.swing.JFrame;
 
-public class MineSweeper extends Canvas implements Runnable {
+public final class MineSweeper extends Canvas implements Runnable {
 
 	private static final long			serialVersionUID	= 1L;
 
-	public static final short			height				= 12, width = 12, numMines = 20;
+	public static final short			height				= 15, width = 15, numMines = 25;
 
 	private static JFrame				frame;
 
@@ -42,6 +42,7 @@ public class MineSweeper extends Canvas implements Runnable {
 		game.addMouseListener(mouseInput);
 		frame.add(game);
 		frame.pack( );
+
 		frame.setVisible(true);
 		thread.start( );
 	}
@@ -70,14 +71,14 @@ public class MineSweeper extends Canvas implements Runnable {
 
 	private void render( ) {
 
-		BufferStrategy bs = getBufferStrategy( );
+		final BufferStrategy bs = getBufferStrategy( );
 
 		if (bs == null) {
 			createBufferStrategy(3);
 			return;
 		}
 
-		Graphics g = bs.getDrawGraphics( );
+		final Graphics g = bs.getDrawGraphics( );
 
 		g.clearRect(0, 0, getWidth( ), getHeight( ));
 		grid.draw(g);
@@ -88,6 +89,9 @@ public class MineSweeper extends Canvas implements Runnable {
 
 	@Override
 	public void run( ) {
+
+		System.out.printf("%.2f", grid.getPercentofMines( ) * 100);
+		System.out.println("% of the map is mined.");
 
 		final double delta = 1000 / 60f;
 		int fps = 0, ups = 0;
@@ -123,6 +127,7 @@ public class MineSweeper extends Canvas implements Runnable {
 		}
 	}
 
+	// TODO: Check for win
 	private void update( ) {
 
 		grid.setOffsets(getWidth( ) / 2, getHeight( ) / 2);
