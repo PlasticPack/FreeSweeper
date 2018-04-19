@@ -31,7 +31,7 @@ public final class Square {
 
 		if (type != Type.UNSET) return;
 
-		final Square[ ] neighbors = grid.getNeighbors(x, y);
+		final Square[ ] neighbors = grid.neighbors(x, y);
 
 		for (Square n : neighbors) {
 
@@ -67,6 +67,16 @@ public final class Square {
 		}
 
 		return type;
+	}
+
+	public int getX( ) {
+
+		return x;
+	}
+
+	public int getY( ) {
+
+		return y;
 	}
 
 	public boolean isFlagged( ) {

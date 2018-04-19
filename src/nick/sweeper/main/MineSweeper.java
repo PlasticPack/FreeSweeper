@@ -36,10 +36,12 @@ public final class MineSweeper extends Canvas implements Runnable {
 		frame.setTitle(name);
 		frame.setLocationRelativeTo(null);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.setMinimumSize(grid.getGridRenderSize( ));
-		game.setPreferredSize(grid.getGridRenderSize( ));
+		frame.setMinimumSize(grid.renderSize( ));
+		game.setPreferredSize(grid.renderSize( ));
 		frame.addMouseListener(mouseInput);
 		game.addMouseListener(mouseInput);
+		frame.addMouseMotionListener(mouseInput);
+		game.addMouseMotionListener(mouseInput);
 		frame.add(game);
 		frame.pack( );
 
@@ -47,25 +49,9 @@ public final class MineSweeper extends Canvas implements Runnable {
 		thread.start( );
 	}
 
-	public static void stop(final boolean lost) {
-
-		isRunning = false;
-
-		if (lost) {
-			System.out.println("Hit a mine!");
-		}
-
-		try {
-			thread.join(1000);
-			System.exit(0);
-		} catch (Exception e) {
-			e.printStackTrace( );
-		}
-	}
-
 	public MineSweeper( ) {
 
-		grid = new Grid(width, height, numMines);
+		grid = new Grid(width, height, numMines, this);
 
 	}
 
@@ -87,10 +73,20 @@ public final class MineSweeper extends Canvas implements Runnable {
 		bs.show( );
 	}
 
+	public int renderHeight( ) {
+
+		return getHeight( );
+	}
+
+	public int renderWidth( ) {
+
+		return getWidth( );
+	}
+
 	@Override
 	public void run( ) {
 
-		System.out.printf("%.2f", grid.getPercentofMines( ) * 100);
+		System.out.printf("%.2f", grid.percentMines( ));
 		System.out.println("% of the map is mined.");
 
 		final double delta = 1000 / 60f;
@@ -111,7 +107,7 @@ public final class MineSweeper extends Canvas implements Runnable {
 			if ((lastPrint + 1000) < System.currentTimeMillis( )) {
 
 				final String lastSec = " | UPS: " + ups + " | FPS: " + fps;
-				final String basePrint = name + " (" + grid.getSizeX( ) + ", " + grid.getSizeY( ) + ") | Flags Used: " + grid.getFlagsUsed( ) + " | Mines: " + grid.getNumMines( ) + " | " + String.format("%.2f", grid.percentComplete( )) + "% Complete";
+				final String basePrint = name + " (" + grid.sizeX( ) + ", " + grid.sizeY( ) + ") | Flags Used: " + grid.flagsUsed( ) + " | Mines: " + grid.numMines( ) + " | " + String.format("%.2f", grid.percentComplete( )) + "% Complete";
 
 				if (debug) {
 					frame.setTitle(basePrint + lastSec);
@@ -127,7 +123,22 @@ public final class MineSweeper extends Canvas implements Runnable {
 		}
 	}
 
-	// TODO: Check for win
+	public void stop(final boolean lost) {
+
+		isRunning = false;
+
+		if (lost) {
+			System.out.println("Hit a mine!");
+		}
+
+		try {
+			thread.join(1000);
+			System.exit(0);
+		} catch (Exception e) {
+			e.printStackTrace( );
+		}
+	}
+
 	private void update( ) {
 
 		grid.setOffsets(getWidth( ) / 2, getHeight( ) / 2);

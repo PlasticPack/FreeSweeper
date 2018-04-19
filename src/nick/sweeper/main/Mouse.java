@@ -2,8 +2,28 @@ package nick.sweeper.main;
 
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 
-public class Mouse implements MouseListener {
+public class Mouse implements MouseListener, MouseMotionListener {
+
+	private static int		mX, mY;
+
+	private static boolean	mouseIn	= false;
+
+	public static boolean isMouseIn( ) {
+
+		return mouseIn;
+	}
+
+	public static int mouseX( ) {
+
+		return mX;
+	}
+
+	public static int mouseY( ) {
+
+		return mY;
+	}
 
 	private final Grid g;
 
@@ -22,13 +42,27 @@ public class Mouse implements MouseListener {
 	}
 
 	@Override
+	public void mouseDragged(final MouseEvent arg0) {
+
+	}
+
+	@Override
 	public void mouseEntered(final MouseEvent arg0) {
 
+		mouseIn = true;
 	}
 
 	@Override
 	public void mouseExited(final MouseEvent arg0) {
 
+		mouseIn = false;
+	}
+
+	@Override
+	public void mouseMoved(final MouseEvent e) {
+
+		mX = e.getX( );
+		mY = e.getY( );
 	}
 
 	@Override

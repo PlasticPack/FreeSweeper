@@ -2,6 +2,7 @@ package nick.sweeper.main;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Graphics;
 
 import nick.sweeper.main.Square.Type;
@@ -27,7 +28,15 @@ public class Grid {
 
 	private int					yOff;
 
-	public Grid(final int xSize, final int ySize, final int mines) {
+	private boolean				completed		= false;
+
+	private boolean				hitMine			= false;
+
+	private final MineSweeper	game;
+
+	private Square				highlight;
+
+	public Grid(final int xSize, final int ySize, final int mines, final MineSweeper gameObj) {
 
 		if ((xSize < minDimension) || (ySize < minDimension)) {
 			System.out.println("This grid may be too small");
@@ -36,6 +45,7 @@ public class Grid {
 		sizeX = xSize;
 		sizeY = ySize;
 		numMines = mines;
+		game = gameObj;
 
 		grid = new Square[sizeX][sizeY];
 		initGrid( );
@@ -46,9 +56,9 @@ public class Grid {
 		for (int x = 0; x < sizeX; x++) {
 			for (int y = 0; y < sizeY; y++) {
 
-				Square s = getTileAt(x, y);
-				int rendX = (int) (((x * squareDrawSize) + xOff) - (getGridRenderSize( ).getWidth( ) / 2));
-				int rendY = (int) (((y * squareDrawSize) + yOff) - (getGridRenderSize( ).getHeight( ) / 2));
+				Square s = tileAt(x, y);
+				int rendX = (int) (((x * squareDrawSize) + xOff) - (renderSize( ).getWidth( ) / 2));
+				int rendY = (int) (((y * squareDrawSize) + yOff) - (renderSize( ).getHeight( ) / 2));
 
 				if (s.isHidden( )) {
 
@@ -81,66 +91,41 @@ public class Grid {
 				// Outline for each square
 				g.setColor(Color.BLACK);
 				g.drawRect(rendX, rendY, squareDrawSize, squareDrawSize);
+
 			}
+		}
+
+		if (highlight != null) {
+			final int tX = highlight.getX( ) - 1;
+			final int tY = highlight.getY( ) - 1;
+
+			final int rX = (int) (((tX * squareDrawSize) + xOff) - (renderSize( ).getWidth( ) / 2));
+			final int rY = (int) (((tY * squareDrawSize) + yOff) - (renderSize( ).getHeight( ) / 2));
+
+			g.setColor(Color.ORANGE);
+
+			g.drawRect(rX, rY, squareDrawSize * 3, squareDrawSize * 3);
+		}
+
+		if (completed) {
+			g.setFont(new Font("Courier New", Font.BOLD, 25));
+			g.setColor(Color.GREEN);
+			final String win = "Congratulations!";
+			final int stringMidWidth = g.getFontMetrics( ).stringWidth(win) / 2;
+			g.drawString(win, (game.renderWidth( ) / 2) - stringMidWidth, (game.renderHeight( ) / 2) - (g.getFontMetrics( ).getHeight( ) / 2));
+		}
+		if (hitMine) {
+			g.setFont(new Font("Courier New", Font.BOLD, 25));
+			g.setColor(Color.RED);
+			final String lose = "Hit a Mine!";
+			final int stringMidWidth = g.getFontMetrics( ).stringWidth(lose) / 2;
+			g.drawString(lose, (game.renderWidth( ) / 2) - stringMidWidth, (game.renderHeight( ) / 2) - (g.getFontMetrics( ).getHeight( ) / 2));
 		}
 	}
 
-	public int getFlagsUsed( ) {
+	public int flagsUsed( ) {
 
 		return flagsUsed;
-	}
-
-	public Dimension getGridRenderSize( ) {
-
-		return new Dimension(sizeX * squareDrawSize, sizeY * squareDrawSize);
-	}
-
-	public Square[ ] getNeighbors(final int x, final int y) {
-
-		final Square[ ] toRet = new Square[8];
-
-		toRet[0] = getTileAt(x - 1, y - 1);
-		toRet[1] = getTileAt(x, y - 1);
-		toRet[2] = getTileAt(x + 1, y - 1);
-		toRet[3] = getTileAt(x - 1, y);
-		toRet[4] = getTileAt(x + 1, y);
-		toRet[5] = getTileAt(x - 1, y + 1);
-		toRet[6] = getTileAt(x, y + 1);
-		toRet[7] = getTileAt(x + 1, y + 1);
-
-		return toRet;
-	}
-
-	public int getNumMines( ) {
-
-		return numMines;
-	}
-
-	public float getPercentofMines( ) {
-
-		return (float) (numMines) / getTotalSquares( );
-	}
-
-	public int getSizeX( ) {
-
-		return sizeX;
-	}
-
-	public int getSizeY( ) {
-
-		return sizeY;
-	}
-
-	public Square getTileAt(final int x, final int y) {
-
-		if ((x < 0) || (y < 0) || (x >= sizeX) || (y >= sizeY)) return null;
-
-		return grid[x][y];
-	}
-
-	public int getTotalSquares( ) {
-
-		return sizeX * sizeY;
 	}
 
 	private void initGrid( ) {
@@ -148,7 +133,7 @@ public class Grid {
 		int minesToPlace = numMines;
 		for (int x = 0; x < sizeX; x++) {
 			for (int y = 0; y < sizeY; y++) {
-				int spotsLeft = (getTotalSquares( ) - y) - (x * sizeY);
+				int spotsLeft = (totalSquares( ) - y) - (x * sizeY);
 
 				final double chanceOfMine = (float) (minesToPlace) / spotsLeft;
 				if (Math.random( ) <= chanceOfMine) {
@@ -167,25 +152,45 @@ public class Grid {
 
 		for (int x = 0; x < sizeX; x++) {
 			for (int y = 0; y < sizeY; y++) {
-				getTileAt(x, y).determineType( );
-
+				tileAt(x, y).determineType( );
 			}
 		}
 
 		ready = true;
 	}
 
-	public int numUncovered( ) {
+	public Square[ ] neighbors(final int x, final int y) {
 
-		int uncovered = 0;
+		final Square[ ] toRet = new Square[8];
+
+		toRet[0] = tileAt(x - 1, y - 1);
+		toRet[1] = tileAt(x, y - 1);
+		toRet[2] = tileAt(x + 1, y - 1);
+		toRet[3] = tileAt(x - 1, y);
+		toRet[4] = tileAt(x + 1, y);
+		toRet[5] = tileAt(x - 1, y + 1);
+		toRet[6] = tileAt(x, y + 1);
+		toRet[7] = tileAt(x + 1, y + 1);
+
+		return toRet;
+	}
+
+	public int numKnown( ) {
+
+		int known = 0;
 		for (int x = 0; x < sizeX; x++) {
 			for (int y = 0; y < sizeY; y++) {
-				if (!getTileAt(x, y).isHidden( )) {
-					++uncovered;
+				if (!tileAt(x, y).isHidden( ) || tileAt(x, y).isFlagged( )) {
+					++known;
 				}
 			}
 		}
-		return uncovered;
+		return known;
+	}
+
+	public int numMines( ) {
+
+		return numMines;
 	}
 
 	public void onClick(final int pX, final int pY, final boolean flag) {
@@ -197,7 +202,7 @@ public class Grid {
 		final int tX = ((pX + midX) - xOff) / squareDrawSize;
 		final int tY = ((pY + midY) - yOff) / squareDrawSize;
 
-		final Square s = getTileAt(tX, tY);
+		final Square s = tileAt(tX, tY);
 
 		if (s.isHidden( )) {
 			if (flag) {
@@ -216,12 +221,12 @@ public class Grid {
 
 			s.reveal( );
 			if (s.getType( ) == Type.MINE) {
-				MineSweeper.stop(true);
+				hitMine = true;
 			}
 		}
 
 		if (s.getType( ) == Type.EMPTY) {
-			Square[ ] neighbors = getNeighbors(tX, tY);
+			Square[ ] neighbors = neighbors(tX, tY);
 			for (Square n : neighbors) {
 				if (n == null) {} else if (n.getType( ) != Type.MINE) {
 					n.reveal( );
@@ -233,7 +238,20 @@ public class Grid {
 
 	public float percentComplete( ) {
 
-		return ((numUncovered( ) + flagsUsed) * 100.0f) / getTotalSquares( );
+		return (numKnown( ) * 100.0f) / totalSquares( );
+	}
+
+	/**
+	 * @return The percentage of tiles that are mines.
+	 */
+	public float percentMines( ) {
+
+		return (float) (numMines * 100) / totalSquares( );
+	}
+
+	public Dimension renderSize( ) {
+
+		return new Dimension(sizeX * squareDrawSize, sizeY * squareDrawSize);
 	}
 
 	public void setOffsets(final int x, final int y) {
@@ -242,7 +260,49 @@ public class Grid {
 		yOff = y;
 	}
 
+	public int sizeX( ) {
+
+		return sizeX;
+	}
+
+	public int sizeY( ) {
+
+		return sizeY;
+	}
+
+	public Square tileAt(final int x, final int y) {
+
+		if ((x < 0) || (y < 0) || (x >= sizeX) || (y >= sizeY)) return null;
+
+		return grid[x][y];
+	}
+
+	public int totalSquares( ) {
+
+		return sizeX * sizeY;
+	}
+
 	public void update( ) {
+
+		if (Mouse.isMouseIn( )) {
+			final int mX = Mouse.mouseX( );
+			final int mY = Mouse.mouseY( );
+			final int midX = (sizeX * squareDrawSize) / 2;
+			final int midY = (sizeY * squareDrawSize) / 2;
+			final int tX = ((mX + midX) - xOff) / squareDrawSize;
+			final int tY = ((mY + midY) - yOff) / squareDrawSize;
+
+			if (tileAt(tX, tY) != null) {
+				highlight = tileAt(tX, tY);
+			}
+		}
+		if (numKnown( ) == totalSquares( )) {
+			completed = true;
+		}
+
+		if (hitMine) {
+			game.stop(true);
+		}
 
 	}
 
