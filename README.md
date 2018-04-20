@@ -16,4 +16,4 @@ Free Open Source Minesweeper
 
 ## Notes
 Auto closes upon loss.
-Stays open without responce on win.
+Stays open on win.
