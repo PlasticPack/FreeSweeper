@@ -37,11 +37,13 @@ public final class MineSweeper extends Canvas implements Runnable {
 		frame.setLocationRelativeTo(null);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setMinimumSize(grid.renderSize( ));
-		game.setPreferredSize(grid.renderSize( ));
+
 		frame.addMouseListener(mouseInput);
-		game.addMouseListener(mouseInput);
 		frame.addMouseMotionListener(mouseInput);
+
+		game.addMouseListener(mouseInput);
 		game.addMouseMotionListener(mouseInput);
+
 		frame.add(game);
 		frame.pack( );
 
@@ -52,6 +54,8 @@ public final class MineSweeper extends Canvas implements Runnable {
 	public MineSweeper( ) {
 
 		grid = new Grid(width, height, numMines, this);
+
+		setPreferredSize(grid.renderSize( ));
 
 	}
 
@@ -89,7 +93,7 @@ public final class MineSweeper extends Canvas implements Runnable {
 		System.out.printf("%.2f", grid.percentMines( ));
 		System.out.println("% of the map is mined.");
 
-		final double delta = 1000 / 60f;
+		final double delta = 1000 / 60.0;
 		int fps = 0, ups = 0;
 		long lastUpdate = System.currentTimeMillis( );
 		long lastPrint = System.currentTimeMillis( );
@@ -98,11 +102,11 @@ public final class MineSweeper extends Canvas implements Runnable {
 			while ((lastUpdate + delta) < System.currentTimeMillis( )) {
 				update( );
 				lastUpdate += delta;
-				ups++;
+				++ups;
 			}
 
 			render( );
-			fps++;
+			++fps;
 
 			if ((lastPrint + 1000) < System.currentTimeMillis( )) {
 

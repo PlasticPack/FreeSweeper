@@ -1,6 +1,6 @@
 package nick.sweeper.main;
 
-public final class Square {
+public final class Tile {
 
 	public enum Type {
 		NUMBER, MINE, EMPTY, UNSET
@@ -16,7 +16,7 @@ public final class Square {
 
 	private int			numMineNeighbors	= 0;
 
-	public Square(final Grid g, final int xPos, final int yPos, final boolean isMine) {
+	public Tile(final Grid g, final int xPos, final int yPos, final boolean isMine) {
 
 		grid = g;
 		x = xPos;
@@ -31,11 +31,11 @@ public final class Square {
 
 		if (type != Type.UNSET) return;
 
-		final Square[ ] neighbors = grid.neighbors(x, y);
+		final Tile[ ] neighbors = grid.neighbors(x, y);
 
-		for (Square n : neighbors) {
+		for (final Tile n : neighbors) {
 
-			if (n == null) {} else if ((n.getType( ) == Type.MINE)) {
+			if (n == null) {} else if (n.getType( ) == Type.MINE) {
 				numMineNeighbors++;
 			}
 		}

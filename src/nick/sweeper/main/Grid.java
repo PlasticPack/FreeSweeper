@@ -5,7 +5,7 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 
-import nick.sweeper.main.Square.Type;
+import nick.sweeper.main.Tile.Type;
 
 public class Grid {
 
@@ -14,19 +14,22 @@ public class Grid {
 	 */
 	public static final byte	minDimension	= 5;
 
-	public static final short	squareDrawSize	= 35;
+	/**
+	 * The pixel height of each square
+	 */
+	public static final short	squareDrawSize	= 40;
+
+	public static final boolean	drawHighlight	= true;
 
 	private final int			sizeX, sizeY, numMines;
 
-	private final Square[ ][ ]	grid;
+	private final Tile[ ][ ]	grid;
 
 	private boolean				ready			= false;
 
 	private int					flagsUsed		= 0;
 
-	private int					xOff;
-
-	private int					yOff;
+	private int					xOff, yOff;
 
 	private boolean				completed		= false;
 
@@ -34,7 +37,7 @@ public class Grid {
 
 	private final MineSweeper	game;
 
-	private Square				highlight;
+	private Tile				highlight;
 
 	public Grid(final int xSize, final int ySize, final int mines, final MineSweeper gameObj) {
 
@@ -47,18 +50,65 @@ public class Grid {
 		numMines = mines;
 		game = gameObj;
 
-		grid = new Square[sizeX][sizeY];
+		grid = new Tile[sizeX][sizeY];
 		initGrid( );
 	}
 
 	public void draw(final Graphics g) {
 
+		drawTileGrid(g);
+
+		if (highlight != null) {
+			// Tile X and Y
+			final int tX = highlight.getX( ) - 1;
+			final int tY = highlight.getY( ) - 1;
+			// Render X and Y
+			final int rX = ((tX * squareDrawSize) + xOff) - rendMidX( );
+			final int rY = ((tY * squareDrawSize) + yOff) - rendMidY( );
+
+			g.setColor(Color.ORANGE);
+
+			g.drawRect(rX, rY, squareDrawSize * 3, squareDrawSize * 3);
+		}
+
+		if (completed) {
+			g.setFont(new Font("Courier New", Font.BOLD, squareDrawSize));
+			final String win = "Congratulations!";
+			final int stringMidWidth = g.getFontMetrics( ).stringWidth(win) / 2;
+
+			final int rX = (game.renderWidth( ) / 2) - stringMidWidth;
+			final int rY = (game.renderHeight( ) - g.getFontMetrics( ).getHeight( )) / 2;
+
+			g.setColor(Color.WHITE);
+			g.fillRect(rX, rY, g.getFontMetrics( ).stringWidth(win), g.getFontMetrics( ).getHeight( ));
+
+			g.setColor(Color.GREEN);
+			g.drawString(win, rX, rY);
+		} else if (hitMine) {
+			g.setFont(new Font("Courier New", Font.BOLD, squareDrawSize));
+			final String lose = "Hit a Mine!";
+			final int stringMidWidth = g.getFontMetrics( ).stringWidth(lose) / 2;
+
+			final int rX = (game.renderWidth( ) / 2) - stringMidWidth;
+			final int rY = (game.renderHeight( ) - g.getFontMetrics( ).getHeight( )) / 2;
+
+			g.setColor(Color.WHITE);
+			g.fillRect(rX, rY - g.getFontMetrics( ).getHeight( ), g.getFontMetrics( ).stringWidth(lose), g.getFontMetrics( ).getHeight( ));
+
+			g.setColor(Color.RED);
+			g.drawString(lose, rX, rY);
+		}
+	}
+
+	// TODO: Move into s.render(rendX, rendY);
+	private final void drawTileGrid(final Graphics g) {
+
 		for (int x = 0; x < sizeX; x++) {
 			for (int y = 0; y < sizeY; y++) {
 
-				Square s = tileAt(x, y);
-				int rendX = (int) (((x * squareDrawSize) + xOff) - (renderSize( ).getWidth( ) / 2));
-				int rendY = (int) (((y * squareDrawSize) + yOff) - (renderSize( ).getHeight( ) / 2));
+				final Tile s = tileAt(x, y);
+				final int rendX = ((x * squareDrawSize) + xOff) - rendMidX( );
+				final int rendY = ((y * squareDrawSize) + yOff) - rendMidY( );
 
 				if (s.isHidden( )) {
 
@@ -71,11 +121,11 @@ public class Grid {
 						g.fillOval(rendX, rendY, squareDrawSize, squareDrawSize);
 					}
 
-				} else if (s.getType( ) == Square.Type.EMPTY) {
+				} else if (s.getType( ) == Tile.Type.EMPTY) {
 
 					g.setColor(Color.GRAY);
 					g.fillRect(rendX, rendY, squareDrawSize, squareDrawSize);
-				} else if (s.getType( ) == Square.Type.NUMBER) {
+				} else if (s.getType( ) == Tile.Type.NUMBER) {
 
 					g.setColor(Color.LIGHT_GRAY);
 					g.fillRect(rendX, rendY, squareDrawSize, squareDrawSize);
@@ -94,33 +144,6 @@ public class Grid {
 
 			}
 		}
-
-		if (highlight != null) {
-			final int tX = highlight.getX( ) - 1;
-			final int tY = highlight.getY( ) - 1;
-
-			final int rX = (int) (((tX * squareDrawSize) + xOff) - (renderSize( ).getWidth( ) / 2));
-			final int rY = (int) (((tY * squareDrawSize) + yOff) - (renderSize( ).getHeight( ) / 2));
-
-			g.setColor(Color.ORANGE);
-
-			g.drawRect(rX, rY, squareDrawSize * 3, squareDrawSize * 3);
-		}
-
-		if (completed) {
-			g.setFont(new Font("Courier New", Font.BOLD, 25));
-			g.setColor(Color.GREEN);
-			final String win = "Congratulations!";
-			final int stringMidWidth = g.getFontMetrics( ).stringWidth(win) / 2;
-			g.drawString(win, (game.renderWidth( ) / 2) - stringMidWidth, (game.renderHeight( ) / 2) - (g.getFontMetrics( ).getHeight( ) / 2));
-		}
-		if (hitMine) {
-			g.setFont(new Font("Courier New", Font.BOLD, 25));
-			g.setColor(Color.RED);
-			final String lose = "Hit a Mine!";
-			final int stringMidWidth = g.getFontMetrics( ).stringWidth(lose) / 2;
-			g.drawString(lose, (game.renderWidth( ) / 2) - stringMidWidth, (game.renderHeight( ) / 2) - (g.getFontMetrics( ).getHeight( ) / 2));
-		}
 	}
 
 	public int flagsUsed( ) {
@@ -133,14 +156,14 @@ public class Grid {
 		int minesToPlace = numMines;
 		for (int x = 0; x < sizeX; x++) {
 			for (int y = 0; y < sizeY; y++) {
-				int spotsLeft = (totalSquares( ) - y) - (x * sizeY);
+				final int spotsLeft = (totalSquares( ) - y) - (x * sizeY);
 
-				final double chanceOfMine = (float) (minesToPlace) / spotsLeft;
+				final double chanceOfMine = (double) (minesToPlace) / spotsLeft;
 				if (Math.random( ) <= chanceOfMine) {
-					grid[x][y] = new Square(this, x, y, true);
+					grid[x][y] = new Tile(this, x, y, true);
 					minesToPlace--;
 				} else {
-					grid[x][y] = new Square(this, x, y, false);
+					grid[x][y] = new Tile(this, x, y, false);
 				}
 
 			}
@@ -159,9 +182,18 @@ public class Grid {
 		ready = true;
 	}
 
-	public Square[ ] neighbors(final int x, final int y) {
+	/**
+	 * Will have null values if the center tile is on an edge
+	 *
+	 * @param x
+	 *            The x location of the center tile
+	 * @param y
+	 *            The y location of the center tile
+	 * @return An 8-long array of the tiles touching the center tile
+	 */
+	public Tile[ ] neighbors(final int x, final int y) {
 
-		final Square[ ] toRet = new Square[8];
+		final Tile[ ] toRet = new Tile[8];
 
 		toRet[0] = tileAt(x - 1, y - 1);
 		toRet[1] = tileAt(x, y - 1);
@@ -197,12 +229,10 @@ public class Grid {
 
 		if (!ready) return;
 
-		final int midX = (sizeX * squareDrawSize) / 2;
-		final int midY = (sizeY * squareDrawSize) / 2;
-		final int tX = ((pX + midX) - xOff) / squareDrawSize;
-		final int tY = ((pY + midY) - yOff) / squareDrawSize;
+		final int tX = ((pX + rendMidX( )) - xOff) / squareDrawSize;
+		final int tY = ((pY + rendMidY( )) - yOff) / squareDrawSize;
 
-		final Square s = tileAt(tX, tY);
+		final Tile s = tileAt(tX, tY);
 
 		if (s.isHidden( )) {
 			if (flag) {
@@ -214,20 +244,18 @@ public class Grid {
 					--flagsUsed;
 				}
 
-				return;
+			} else {
+				s.reveal( );
+				if (s.getType( ) == Type.MINE) {
+					hitMine = true;
+				}
 			}
 
-			if (s.isFlagged( )) return;
-
-			s.reveal( );
-			if (s.getType( ) == Type.MINE) {
-				hitMine = true;
-			}
 		}
 
 		if (s.getType( ) == Type.EMPTY) {
-			Square[ ] neighbors = neighbors(tX, tY);
-			for (Square n : neighbors) {
+			final Tile[ ] neighbors = neighbors(tX, tY);
+			for (final Tile n : neighbors) {
 				if (n == null) {} else if (n.getType( ) != Type.MINE) {
 					n.reveal( );
 				}
@@ -254,6 +282,22 @@ public class Grid {
 		return new Dimension(sizeX * squareDrawSize, sizeY * squareDrawSize);
 	}
 
+	/**
+	 * @return The center X of the grid in pixels
+	 */
+	private int rendMidX( ) {
+
+		return (sizeX * squareDrawSize) / 2;
+	}
+
+	/**
+	 * @return The center Y of the grid in pixels
+	 */
+	private int rendMidY( ) {
+
+		return (sizeY * squareDrawSize) / 2;
+	}
+
 	public void setOffsets(final int x, final int y) {
 
 		xOff = x;
@@ -270,7 +314,16 @@ public class Grid {
 		return sizeY;
 	}
 
-	public Square tileAt(final int x, final int y) {
+	/**
+	 * Will return null if given a location outside of the defined grid
+	 *
+	 * @param x
+	 *            The x location of the tile
+	 * @param y
+	 *            The y location of the tile
+	 * @return The tile object at the location given
+	 */
+	public Tile tileAt(final int x, final int y) {
 
 		if ((x < 0) || (y < 0) || (x >= sizeX) || (y >= sizeY)) return null;
 
