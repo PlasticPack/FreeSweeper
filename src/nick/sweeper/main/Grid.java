@@ -54,6 +54,22 @@ public class Grid {
 		initGrid( );
 	}
 
+	/**
+	 * Recursive
+	 */
+	private final void clearEmptyNeighbors(final Tile t) {
+
+		if (t.getType( ) == Tile.Type.EMPTY) {
+			final Tile[ ] neighbors = neighbors(t.getX( ), t.getY( ));
+			for (final Tile n : neighbors) {
+				if (n == null) {} else if ((n.getType( ) != Type.MINE) && n.isHidden( )) {
+					n.reveal( );
+					clearEmptyNeighbors(n);
+				}
+			}
+		}
+	}
+
 	public void draw(final Graphics g) {
 
 		drawTileGrid(g);
@@ -80,7 +96,7 @@ public class Grid {
 			final int rY = (game.renderHeight( ) - g.getFontMetrics( ).getHeight( )) / 2;
 
 			g.setColor(Color.WHITE);
-			g.fillRect(rX, rY, g.getFontMetrics( ).stringWidth(win), g.getFontMetrics( ).getHeight( ));
+			g.fillRect(rX, (rY - g.getFontMetrics( ).getHeight( )) + 10, g.getFontMetrics( ).stringWidth(win), g.getFontMetrics( ).getHeight( ));
 
 			g.setColor(Color.GREEN);
 			g.drawString(win, rX, rY);
@@ -93,14 +109,13 @@ public class Grid {
 			final int rY = (game.renderHeight( ) - g.getFontMetrics( ).getHeight( )) / 2;
 
 			g.setColor(Color.WHITE);
-			g.fillRect(rX, rY - g.getFontMetrics( ).getHeight( ), g.getFontMetrics( ).stringWidth(lose), g.getFontMetrics( ).getHeight( ));
+			g.fillRect(rX, (rY - g.getFontMetrics( ).getHeight( )) + 10, g.getFontMetrics( ).stringWidth(lose), g.getFontMetrics( ).getHeight( ));
 
 			g.setColor(Color.RED);
 			g.drawString(lose, rX, rY);
 		}
 	}
 
-	// TODO: Move into s.render(rendX, rendY);
 	private final void drawTileGrid(final Graphics g) {
 
 		for (int x = 0; x < sizeX; x++) {
@@ -110,33 +125,7 @@ public class Grid {
 				final int rendX = ((x * squareDrawSize) + xOff) - rendMidX( );
 				final int rendY = ((y * squareDrawSize) + yOff) - rendMidY( );
 
-				if (s.isHidden( )) {
-
-					g.setColor(Color.DARK_GRAY);
-					g.fillRect(rendX, rendY, squareDrawSize, squareDrawSize);
-
-					if (s.isFlagged( )) {
-
-						g.setColor(Color.RED);
-						g.fillOval(rendX, rendY, squareDrawSize, squareDrawSize);
-					}
-
-				} else if (s.getType( ) == Tile.Type.EMPTY) {
-
-					g.setColor(Color.GRAY);
-					g.fillRect(rendX, rendY, squareDrawSize, squareDrawSize);
-				} else if (s.getType( ) == Tile.Type.NUMBER) {
-
-					g.setColor(Color.LIGHT_GRAY);
-					g.fillRect(rendX, rendY, squareDrawSize, squareDrawSize);
-
-					g.setColor(Color.BLUE);
-					String txt = s.getDisplayNum( );
-					final int stringMidHigh = g.getFontMetrics( ).getHeight( ) / 2;
-					final int stringMidWide = g.getFontMetrics( ).stringWidth(txt) / 2;
-					final short squareMid = squareDrawSize / 2;
-					g.drawString(txt, (rendX - stringMidWide) + squareMid, rendY + stringMidHigh + squareMid);
-				}
+				s.render(g, rendX, rendY, squareDrawSize);
 
 				// Outline for each square
 				g.setColor(Color.BLACK);
@@ -245,23 +234,18 @@ public class Grid {
 				}
 
 			} else {
-				s.reveal( );
+
 				if (s.getType( ) == Type.MINE) {
 					hitMine = true;
 				}
+				clearEmptyNeighbors(s);
+				s.reveal( );
 			}
 
 		}
 
-		if (s.getType( ) == Type.EMPTY) {
-			final Tile[ ] neighbors = neighbors(tX, tY);
-			for (final Tile n : neighbors) {
-				if (n == null) {} else if (n.getType( ) != Type.MINE) {
-					n.reveal( );
-				}
-			}
+		clearEmptyNeighbors(s);
 
-		}
 	}
 
 	public float percentComplete( ) {

@@ -1,5 +1,8 @@
 package nick.sweeper.main;
 
+import java.awt.Color;
+import java.awt.Graphics;
+
 public final class Tile {
 
 	public enum Type {
@@ -87,6 +90,37 @@ public final class Tile {
 	public boolean isHidden( ) {
 
 		return hidden;
+	}
+
+	public void render(final Graphics g, final int pX, final int pY, final short size) {
+
+		if (hidden) {
+
+			g.setColor(Color.DARK_GRAY);
+			g.fillRect(pX, pY, size, size);
+
+			if (isFlagged( )) {
+
+				g.setColor(Color.RED);
+				g.fillOval(pX, pY, size, size);
+			}
+
+		} else if (getType( ) == Tile.Type.EMPTY) {
+
+			g.setColor(Color.GRAY);
+			g.fillRect(pX, pY, size, size);
+		} else if (getType( ) == Tile.Type.NUMBER) {
+
+			g.setColor(Color.LIGHT_GRAY);
+			g.fillRect(pX, pY, size, size);
+
+			g.setColor(Color.BLUE);
+			String txt = getDisplayNum( );
+			final int stringMidHigh = g.getFontMetrics( ).getHeight( ) / 2;
+			final int stringMidWide = g.getFontMetrics( ).stringWidth(txt) / 2;
+			final short squareMid = (short) (size / 2);
+			g.drawString(txt, (pX - stringMidWide) + squareMid, pY + stringMidHigh + squareMid);
+		}
 	}
 
 	public void reveal( ) {

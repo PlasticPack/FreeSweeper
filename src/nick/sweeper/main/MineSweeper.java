@@ -10,11 +10,13 @@ public final class MineSweeper extends Canvas implements Runnable {
 
 	private static final long			serialVersionUID	= 1L;
 
-	public static final short			height				= 15, width = 15, numMines = 25;
+	public static final short			height				= 20, width = 20, numMines = 35;
 
 	private static JFrame				frame;
 
 	private static Grid					grid;
+
+	private static final short			maxFPS				= 240;
 
 	private static boolean				isRunning			= true;
 
@@ -93,10 +95,12 @@ public final class MineSweeper extends Canvas implements Runnable {
 		System.out.printf("%.2f", grid.percentMines( ));
 		System.out.println("% of the map is mined.");
 
-		final double delta = 1000 / 60.0;
+		final double delta = 1000.0 / 60;
 		int fps = 0, ups = 0;
-		long lastUpdate = System.currentTimeMillis( );
-		long lastPrint = System.currentTimeMillis( );
+		final double minFrameTime = 1000000000.0 / maxFPS;
+		long lastUpdate = System.currentTimeMillis( ), lastPrint = System.currentTimeMillis( ),
+				lastFrameTime = System.nanoTime( );
+
 		while (isRunning) {
 
 			while ((lastUpdate + delta) < System.currentTimeMillis( )) {
@@ -105,8 +109,11 @@ public final class MineSweeper extends Canvas implements Runnable {
 				++ups;
 			}
 
-			render( );
-			++fps;
+			while ((lastFrameTime + minFrameTime) < System.nanoTime( )) {
+				render( );
+				lastFrameTime += minFrameTime;
+				++fps;
+			}
 
 			if ((lastPrint + 1000) < System.currentTimeMillis( )) {
 
