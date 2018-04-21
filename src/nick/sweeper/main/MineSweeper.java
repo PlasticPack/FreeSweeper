@@ -10,7 +10,7 @@ public final class MineSweeper extends Canvas implements Runnable {
 
 	private static final long			serialVersionUID	= 1L;
 
-	public static final short			height				= 20, width = 20, numMines = 35;
+	public static final short			height				= 25, width = 25, numMines = 100;
 
 	private static JFrame				frame;
 
@@ -89,15 +89,16 @@ public final class MineSweeper extends Canvas implements Runnable {
 		return getWidth( );
 	}
 
+	@SuppressWarnings("unused")
 	@Override
 	public void run( ) {
 
-		System.out.printf("%.2f", grid.percentMines( ));
+		System.out.printf("%.1f", grid.percentMines( ));
 		System.out.println("% of the map is mined.");
 
-		final double delta = 1000.0 / 60;
-		int fps = 0, ups = 0;
-		final double minFrameTime = 1000000000.0 / maxFPS;
+		final double delta = 1000.0 / 60, minFrameTime = 1000000000.0 / maxFPS;
+
+		short fps = 0, ups = 0;
 		long lastUpdate = System.currentTimeMillis( ), lastPrint = System.currentTimeMillis( ),
 				lastFrameTime = System.nanoTime( );
 
@@ -117,10 +118,10 @@ public final class MineSweeper extends Canvas implements Runnable {
 
 			if ((lastPrint + 1000) < System.currentTimeMillis( )) {
 
-				final String lastSec = " | UPS: " + ups + " | FPS: " + fps;
 				final String basePrint = name + " (" + grid.sizeX( ) + ", " + grid.sizeY( ) + ") | Flags Used: " + grid.flagsUsed( ) + " | Mines: " + grid.numMines( ) + " | " + String.format("%.2f", grid.percentComplete( )) + "% Complete";
 
 				if (debug) {
+					final String lastSec = " | UPS: " + ups + " | FPS: " + fps;
 					frame.setTitle(basePrint + lastSec);
 				} else {
 					frame.setTitle(basePrint);
@@ -143,7 +144,7 @@ public final class MineSweeper extends Canvas implements Runnable {
 		}
 
 		try {
-			thread.join(1000);
+			thread.join(2100);
 			System.exit(0);
 		} catch (Exception e) {
 			e.printStackTrace( );
