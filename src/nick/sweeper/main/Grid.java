@@ -235,11 +235,14 @@ public class Grid {
 
 			} else {
 
-				if (s.getType( ) == Type.MINE) {
-					hitMine = true;
+				if (!s.isFlagged( )) {
+
+					if (s.getType( ) == Type.MINE) {
+						hitMine = true;
+					}
+					clearEmptyNeighbors(s);
+					s.reveal( );
 				}
-				clearEmptyNeighbors(s);
-				s.reveal( );
 			}
 
 		}

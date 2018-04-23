@@ -6,11 +6,12 @@ import java.awt.image.BufferStrategy;
 
 import javax.swing.JFrame;
 
+// TODO: Add AI
 public final class MineSweeper extends Canvas implements Runnable {
 
 	private static final long			serialVersionUID	= 1L;
 
-	public static final short			height				= 25, width = 25, numMines = 100;
+	public static final short			height				= 25, width = 40, numMines = 100;
 
 	private static JFrame				frame;
 
@@ -24,7 +25,7 @@ public final class MineSweeper extends Canvas implements Runnable {
 
 	private static final Thread			thread				= new Thread(game, "Main Thread");
 
-	public static final String			name				= "MineSweeper";
+	public static final String			name				= "MineSweeper v1.2b";
 
 	private static final Mouse			mouseInput			= new Mouse(grid);
 
@@ -37,6 +38,7 @@ public final class MineSweeper extends Canvas implements Runnable {
 		frame.setResizable(true);
 		frame.setTitle(name);
 		frame.setLocationRelativeTo(null);
+		frame.setLocationByPlatform(true);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setMinimumSize(grid.renderSize( ));
 
