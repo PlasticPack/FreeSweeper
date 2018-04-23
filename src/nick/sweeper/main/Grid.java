@@ -222,6 +222,12 @@ public class Grid {
 		final int tY = ((pY + rendMidY( )) - yOff) / squareDrawSize;
 
 		final Tile s = tileAt(tX, tY);
+		onClick(s, flag);
+	}
+
+	public void onClick(final Tile s, final boolean flag) {
+
+		System.out.println("Click on (" + s.getX( ) + ", " + s.getY( ) + "). Type: " + s.getType( ));
 
 		if (s.isHidden( )) {
 			if (flag) {
@@ -248,7 +254,6 @@ public class Grid {
 		}
 
 		clearEmptyNeighbors(s);
-
 	}
 
 	public float percentComplete( ) {

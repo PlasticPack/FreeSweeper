@@ -2,9 +2,13 @@ package nick.sweeper.main;
 
 import java.awt.Canvas;
 import java.awt.Graphics;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.image.BufferStrategy;
 
 import javax.swing.JFrame;
+
+import nick.sweeper.ai.AILogic;
 
 // TODO: Add AI
 public final class MineSweeper extends Canvas implements Runnable {
@@ -31,6 +35,10 @@ public final class MineSweeper extends Canvas implements Runnable {
 
 	public static final boolean			debug				= false;
 
+	private static AILogic				ai;
+
+	private static boolean				aiToggle			= false;
+
 	public static void main(final String[ ] args) {
 
 		frame = new JFrame( );
@@ -48,6 +56,27 @@ public final class MineSweeper extends Canvas implements Runnable {
 		game.addMouseListener(mouseInput);
 		game.addMouseMotionListener(mouseInput);
 
+		frame.addKeyListener(new KeyListener( ) {
+
+			@Override
+			public void keyPressed(final KeyEvent e) {
+
+				if (e.getKeyCode( ) == KeyEvent.VK_A) {
+					aiToggle = !aiToggle;
+				}
+			}
+
+			@Override
+			public void keyReleased(final KeyEvent arg0) {
+
+			}
+
+			@Override
+			public void keyTyped(final KeyEvent arg0) {
+
+			}
+		});
+
 		frame.add(game);
 		frame.pack( );
 
@@ -58,6 +87,8 @@ public final class MineSweeper extends Canvas implements Runnable {
 	public MineSweeper( ) {
 
 		grid = new Grid(width, height, numMines, this);
+
+		ai = new AILogic(grid);
 
 		setPreferredSize(grid.renderSize( ));
 
@@ -157,6 +188,10 @@ public final class MineSweeper extends Canvas implements Runnable {
 
 		grid.setOffsets(getWidth( ) / 2, getHeight( ) / 2);
 		grid.update( );
+
+		if (aiToggle) {
+			ai.update( );
+		}
 	}
 
 }

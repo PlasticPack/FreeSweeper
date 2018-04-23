@@ -17,7 +17,7 @@ public final class Tile {
 
 	private boolean		hidden				= true, flagged = false;
 
-	private int			numMineNeighbors	= 0;
+	private byte		numMineNeighbors	= 0;
 
 	public Tile(final Grid g, final int xPos, final int yPos, final boolean isMine) {
 
