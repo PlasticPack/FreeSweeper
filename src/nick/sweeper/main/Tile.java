@@ -128,4 +128,10 @@ public final class Tile {
 		hidden = false;
 	}
 
+	@Override
+	public String toString( ) {
+
+		return "(" + x + ", " + y + ")";
+	}
+
 }

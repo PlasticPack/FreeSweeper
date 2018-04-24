@@ -3,19 +3,42 @@ package nick.sweeper.ai;
 import nick.sweeper.main.Grid;
 import nick.sweeper.main.Tile;
 
-public class AILogic {
+public class AILogic implements Runnable {
 
-	private float[ ][ ]	probability;
+	private final Grid			grid;
 
-	private final Grid	grid;
+	private boolean				started	= false;
 
-	private boolean		started	= false;
+	private boolean[ ][ ]		satisfied;
+
+	private volatile boolean	running	= false;
+
+	private Thread				aiThread;
 
 	public AILogic(final Grid g) {
 
 		grid = g;
-		probability = new float[g.sizeX( )][g.sizeY( )];
+	}
 
+	private void cooldown( ) throws InterruptedException {
+
+		Thread.sleep(125);
+		synchronized (this) {
+			while (!running) {
+				wait( );
+			}
+		}
+	}
+
+	private byte flagsUsed(final Tile[ ] list) {
+
+		byte flagged = 0;
+		for (Tile t : list) {
+			if (t == null) {} else if (t.isFlagged( )) {
+				flagged++;
+			}
+		}
+		return flagged;
 	}
 
 	private byte hiddenIn(final Tile[ ] list) {
@@ -29,6 +52,29 @@ public class AILogic {
 		return hidden;
 	}
 
+	private void init( ) {
+
+		if (started) return;
+
+		final int rX = (int) (Math.random( ) * grid.sizeX( )) / 2;
+		final int rY = (int) (Math.random( ) * grid.sizeY( ));
+
+		grid.onClick(grid.tileAt(rX, rY), false);
+
+		if (grid.tileAt(rX, rY).getType( ) == Tile.Type.NUMBER) {
+			init( );
+		}
+
+		satisfied = new boolean[grid.sizeX( )][grid.sizeY( )];
+
+		started = true;
+	}
+
+	public boolean isRunning( ) {
+
+		return running;
+	}
+
 	private byte minesVisible(final Tile[ ] list) {
 
 		byte minesVisible = 0;
@@ -40,65 +86,88 @@ public class AILogic {
 		return minesVisible;
 	}
 
-	private void start( ) {
+	public synchronized void pause( ) {
 
-		System.out.println("Starting the AI routine...");
+		System.out.println("Pausing...");
+		running = false;
+		aiThread.interrupt( );
+		aiThread = null;
+	}
 
-		final int rX = (int) (Math.random( ) * grid.sizeX( ));
-		final int rY = (int) (Math.random( ) * grid.sizeY( ));
+	@Override
+	public void run( ) {
 
-		grid.onClick(grid.tileAt(rX, rY), false);
+		init( );
 
-		for (int x = 0; x < grid.sizeX( ); x++) {
-			for (int y = 0; y < grid.sizeY( ); y++) {
-				probability[x][y] = 0;
+		while (true) {
+			try {
+				Thread.sleep(500);
+				if (!running) {
+					synchronized (this) {
+						while (!running) {
+							wait( );
+						}
+					}
+				}
+				update( );
+			} catch (InterruptedException e) {
+				e.printStackTrace( );
 			}
 		}
 
-		if (grid.tileAt(rX, rY).getType( ) == Tile.Type.NUMBER) {
-			start( );
-		}
-
-		started = true;
-		System.out.println("Started the AI.");
 	}
 
-	public void update( ) {
+	public synchronized void start( ) {
+
+		if (running) return;
+		running = true;
+		aiThread = new Thread(this, "AI");
+		System.out.println("Starting...");
+		aiThread.start( );
+	}
+
+	private void update( ) throws InterruptedException {
 
 		if (!started) {
-			start( );
+			init( );
 		}
+
+		if (grid.percentComplete( ) >= 100) return;
 
 		for (int x = 0; x < grid.sizeX( ); x++) {
 			for (int y = 0; y < grid.sizeY( ); y++) {
 
 				final Tile t = grid.tileAt(x, y);
 
-				if (!t.isHidden( ) && (t.getType( ) == Tile.Type.NUMBER)) {
+				if (!t.isHidden( ) && (t.getType( ) == Tile.Type.NUMBER) && !satisfied[x][y]) {
+
+					grid.setHighLight(t);
 
 					final byte minesInNeighbors = Byte.parseByte(t.getDisplayNum( ));
 					final Tile[ ] neighbors = grid.neighbors(x, y);
-					final byte visibleMines = minesVisible(neighbors);
 
-					final byte hiddenMines = (byte) (minesInNeighbors - visibleMines);
+					if (flagsUsed(neighbors) == minesInNeighbors) {
+						for (final Tile n : neighbors) {
+							if ((n != null) && (!n.isFlagged( ) || !n.isHidden( ))) {
+								grid.onClick(n, false);
+								cooldown( );
+							}
+						}
+						satisfied[x][y] = true;
+					}
+
+					final byte hiddenMines = (byte) (minesInNeighbors - minesVisible(neighbors));
 					final byte hiddenTiles = hiddenIn(neighbors);
 
 					if (hiddenMines == hiddenTiles) {
 						for (Tile n : neighbors) {
 							if ((n != null) && !n.isFlagged( ) && n.isHidden( )) {
 								grid.onClick(n, true);
+								cooldown( );
 							}
 						}
-					} else if (hiddenMines > hiddenTiles) {
-						System.out.println("(" + x + ", " + y + ")| Hidden Mines: " + hiddenMines + " | Hidden Tiles: " + hiddenTiles);
-					} else {
-						for (Tile n : neighbors) {
-							if (n != null) {
-								probability[n.getX( )][n.getY( )] += ((float) hiddenMines) / hiddenTiles;
-							}
-						}
+						satisfied[x][y] = true;
 					}
-
 				}
 			}
 		}

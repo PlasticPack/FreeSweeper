@@ -83,8 +83,10 @@ public class Grid {
 			final int rY = ((tY * squareDrawSize) + yOff) - rendMidY( );
 
 			g.setColor(Color.ORANGE);
-
 			g.drawRect(rX, rY, squareDrawSize * 3, squareDrawSize * 3);
+
+			g.setColor(Color.YELLOW);
+			g.drawRect(rX + squareDrawSize, rY + squareDrawSize, squareDrawSize, squareDrawSize);
 		}
 
 		if (completed) {
@@ -227,7 +229,8 @@ public class Grid {
 
 	public void onClick(final Tile s, final boolean flag) {
 
-		System.out.println("Click on (" + s.getX( ) + ", " + s.getY( ) + "). Type: " + s.getType( ));
+		// System.out.println("Click on (" + s.getX( ) + ", " + s.getY( ) + "). Type: " + s.getType(
+		// ) + " | Flag: " + flag);
 
 		if (s.isHidden( )) {
 			if (flag) {
@@ -290,6 +293,11 @@ public class Grid {
 		return (sizeY * squareDrawSize) / 2;
 	}
 
+	public void setHighLight(final Tile t) {
+
+		highlight = t;
+	}
+
 	public void setOffsets(final int x, final int y) {
 
 		xOff = x;
@@ -329,16 +337,16 @@ public class Grid {
 
 	public void update( ) {
 
-		if (Mouse.isMouseIn( )) {
-			final int mX = Mouse.mouseX( );
-			final int mY = Mouse.mouseY( );
+		if (Input.isMouseIn( )) {
+			final int mX = Input.mouseX( );
+			final int mY = Input.mouseY( );
 			final int midX = (sizeX * squareDrawSize) / 2;
 			final int midY = (sizeY * squareDrawSize) / 2;
 			final int tX = ((mX + midX) - xOff) / squareDrawSize;
 			final int tY = ((mY + midY) - yOff) / squareDrawSize;
 
-			if (tileAt(tX, tY) != null) {
-				highlight = tileAt(tX, tY);
+			if ((tileAt(tX, tY) != null) && !MineSweeper.getAI( ).isRunning( )) {
+				setHighLight(tileAt(tX, tY));
 			}
 		}
 		if (numKnown( ) == totalSquares( )) {
