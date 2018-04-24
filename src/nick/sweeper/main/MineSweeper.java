@@ -8,7 +8,6 @@ import javax.swing.JFrame;
 
 import nick.sweeper.ai.AILogic;
 
-// TODO: Add AI
 public final class MineSweeper extends Canvas implements Runnable {
 
 	private static final long			serialVersionUID	= 1L;
