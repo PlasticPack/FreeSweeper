@@ -8,12 +8,11 @@ import javax.swing.JFrame;
 
 import nick.sweeper.ai.AILogic;
 
-// TODO: Add AI
 public final class MineSweeper extends Canvas implements Runnable {
 
 	private static final long			serialVersionUID	= 1L;
 
-	public static final short			height				= 20, width = 20, numMines = 40;
+	public static final short			height				= 10, width = 10, numMines = 10;
 
 	private static JFrame				frame;
 
@@ -34,6 +33,8 @@ public final class MineSweeper extends Canvas implements Runnable {
 	public static final boolean			debug				= false;
 
 	private static AILogic				ai;
+
+	private static boolean				aiEngaged			= false;
 
 	public static AILogic getAI( ) {
 
@@ -66,13 +67,17 @@ public final class MineSweeper extends Canvas implements Runnable {
 		thread.start( );
 	}
 
+	public static void toggleAI( ) {
+
+		aiEngaged = !aiEngaged;
+	}
+
 	public MineSweeper( ) {
 
 		grid = new Grid(width, height, numMines, this);
 		setPreferredSize(grid.renderSize( ));
 
 		ai = new AILogic(grid);
-
 	}
 
 	private void render( ) {
@@ -132,7 +137,7 @@ public final class MineSweeper extends Canvas implements Runnable {
 
 			if ((lastPrint + 1000) < System.currentTimeMillis( )) {
 
-				final String basePrint = name + " (" + grid.sizeX( ) + ", " + grid.sizeY( ) + ") | Flags Used: " + grid.flagsUsed( ) + " | Mines: " + grid.numMines( ) + " | " + String.format("%.2f", grid.percentComplete( )) + "% Complete";
+				final String basePrint = name + " (" + grid.sizeX( ) + ", " + grid.sizeY( ) + ") | Flags Used: " + grid.flagsUsed( ) + " | Mines: " + grid.numMines( ) + " | " + String.format("%.2f", grid.percentComplete( )) + "% Complete | AI Engaged: " + ai.isAlive( );
 
 				if (debug) {
 					final String lastSec = " | UPS: " + ups + " | FPS: " + fps;
@@ -152,13 +157,15 @@ public final class MineSweeper extends Canvas implements Runnable {
 	public synchronized void stop(final boolean lost) {
 
 		isRunning = false;
+		ai.halt( );
 
 		if (lost) {
 			System.out.println("Hit a mine!");
 		}
 
 		try {
-			thread.join(2100);
+			ai.join(1000);
+			thread.join(2000);
 			System.exit(0);
 		} catch (Exception e) {
 			e.printStackTrace( );
@@ -169,6 +176,11 @@ public final class MineSweeper extends Canvas implements Runnable {
 
 		grid.setOffsets(getWidth( ) / 2, getHeight( ) / 2);
 		grid.update( );
+
+		if (aiEngaged && !ai.isRunning( )) {
+			ai.start( );
+			System.out.println("AI started");
+		}
 
 	}
 

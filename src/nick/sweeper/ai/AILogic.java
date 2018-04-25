@@ -3,7 +3,7 @@ package nick.sweeper.ai;
 import nick.sweeper.main.Grid;
 import nick.sweeper.main.Tile;
 
-public class AILogic implements Runnable {
+public class AILogic extends Thread {
 
 	private final Grid			grid;
 
@@ -13,21 +13,23 @@ public class AILogic implements Runnable {
 
 	private volatile boolean	running	= false;
 
-	private Thread				aiThread;
-
 	public AILogic(final Grid g) {
 
 		grid = g;
+
+		setName("AI");
+		setPriority(MIN_PRIORITY + 1);
 	}
 
-	private void cooldown( ) throws InterruptedException {
+	private void cooldown( ) {
 
-		Thread.sleep(125);
-		synchronized (this) {
-			while (!running) {
-				wait( );
-			}
+		try {
+			Thread.sleep(125);
+		} catch (InterruptedException e) {
+			System.out.println("Failed to sleep!");
+			e.printStackTrace( );
 		}
+
 	}
 
 	private byte flagsUsed(final Tile[ ] list) {
@@ -41,6 +43,11 @@ public class AILogic implements Runnable {
 		return flagged;
 	}
 
+	public void halt( ) {
+
+		running = false;
+	}
+
 	private byte hiddenIn(final Tile[ ] list) {
 
 		byte hidden = 0;
@@ -52,7 +59,7 @@ public class AILogic implements Runnable {
 		return hidden;
 	}
 
-	private void init( ) {
+	public void init( ) {
 
 		if (started) return;
 
@@ -86,53 +93,14 @@ public class AILogic implements Runnable {
 		return minesVisible;
 	}
 
-	public synchronized void pause( ) {
+	private void process( ) {
 
-		System.out.println("Pausing...");
-		running = false;
-		aiThread.interrupt( );
-		aiThread = null;
-	}
-
-	@Override
-	public void run( ) {
-
-		init( );
-
-		while (true) {
-			try {
-				Thread.sleep(500);
-				if (!running) {
-					synchronized (this) {
-						while (!running) {
-							wait( );
-						}
-					}
-				}
-				update( );
-			} catch (InterruptedException e) {
-				e.printStackTrace( );
-			}
-		}
-
-	}
-
-	public synchronized void start( ) {
-
-		if (running) return;
-		running = true;
-		aiThread = new Thread(this, "AI");
-		System.out.println("Starting...");
-		aiThread.start( );
-	}
-
-	private void update( ) throws InterruptedException {
-
+		if (grid.percentComplete( ) >= 100) return;
 		if (!started) {
 			init( );
 		}
 
-		if (grid.percentComplete( ) >= 100) return;
+		final long startTime = System.currentTimeMillis( );
 
 		for (int x = 0; x < grid.sizeX( ); x++) {
 			for (int y = 0; y < grid.sizeY( ); y++) {
@@ -145,6 +113,8 @@ public class AILogic implements Runnable {
 
 					final byte minesInNeighbors = Byte.parseByte(t.getDisplayNum( ));
 					final Tile[ ] neighbors = grid.neighbors(x, y);
+					final byte hiddenMines = (byte) (minesInNeighbors - minesVisible(neighbors));
+					final byte hiddenTiles = hiddenIn(neighbors);
 
 					if (flagsUsed(neighbors) == minesInNeighbors) {
 						for (final Tile n : neighbors) {
@@ -154,12 +124,7 @@ public class AILogic implements Runnable {
 							}
 						}
 						satisfied[x][y] = true;
-					}
-
-					final byte hiddenMines = (byte) (minesInNeighbors - minesVisible(neighbors));
-					final byte hiddenTiles = hiddenIn(neighbors);
-
-					if (hiddenMines == hiddenTiles) {
+					} else if (hiddenMines == hiddenTiles) {
 						for (Tile n : neighbors) {
 							if ((n != null) && !n.isFlagged( ) && n.isHidden( )) {
 								grid.onClick(n, true);
@@ -170,6 +135,17 @@ public class AILogic implements Runnable {
 					}
 				}
 			}
+		}
+
+		System.out.println("AI completed 1 scan in " + (System.currentTimeMillis( ) - startTime) + "ms");
+	}
+
+	@Override
+	public void run( ) {
+
+		running = true;
+		while (running) {
+			process( );
 		}
 	}
 

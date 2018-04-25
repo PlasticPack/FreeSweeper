@@ -229,8 +229,9 @@ public class Grid {
 
 	public void onClick(final Tile s, final boolean flag) {
 
-		// System.out.println("Click on (" + s.getX( ) + ", " + s.getY( ) + "). Type: " + s.getType(
-		// ) + " | Flag: " + flag);
+		if (MineSweeper.debug) {
+			System.out.println("Click on (" + s.getX( ) + ", " + s.getY( ) + "). | Flag: " + flag);
+		}
 
 		if (s.isHidden( )) {
 			if (flag) {
