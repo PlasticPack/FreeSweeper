@@ -12,7 +12,7 @@ public final class MineSweeper extends Canvas implements Runnable {
 
 	private static final long			serialVersionUID	= 1L;
 
-	public static final short			height				= 10, width = 10, numMines = 10;
+	public static final short			height				= 25, width = 30, numMines = 90;
 
 	private static JFrame				frame;
 
@@ -34,7 +34,7 @@ public final class MineSweeper extends Canvas implements Runnable {
 
 	private static AILogic				ai;
 
-	private static boolean				aiEngaged			= false;
+	private static boolean				aiEngage			= false;
 
 	public static AILogic getAI( ) {
 
@@ -69,7 +69,7 @@ public final class MineSweeper extends Canvas implements Runnable {
 
 	public static void toggleAI( ) {
 
-		aiEngaged = !aiEngaged;
+		aiEngage = !AILogic.isRunning( );
 	}
 
 	public MineSweeper( ) {
@@ -157,13 +157,16 @@ public final class MineSweeper extends Canvas implements Runnable {
 	public synchronized void stop(final boolean lost) {
 
 		isRunning = false;
-		ai.halt( );
+		AILogic.halt( );
 
 		if (lost) {
 			System.out.println("Hit a mine!");
 		}
 
 		try {
+			if (debug) {
+				wait( );
+			}
 			ai.join(1000);
 			thread.join(2000);
 			System.exit(0);
@@ -177,9 +180,9 @@ public final class MineSweeper extends Canvas implements Runnable {
 		grid.setOffsets(getWidth( ) / 2, getHeight( ) / 2);
 		grid.update( );
 
-		if (aiEngaged && !ai.isRunning( )) {
+		if (aiEngage && !AILogic.isRunning( )) {
 			ai.start( );
-			System.out.println("AI started");
+			aiEngage = false;
 		}
 
 	}

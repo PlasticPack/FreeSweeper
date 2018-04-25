@@ -1,27 +1,14 @@
 package nick.sweeper.ai;
 
 import nick.sweeper.main.Grid;
+import nick.sweeper.main.MineSweeper;
 import nick.sweeper.main.Tile;
 
 public class AILogic extends Thread {
 
-	private final Grid			grid;
+	private static volatile boolean running = false;
 
-	private boolean				started	= false;
-
-	private boolean[ ][ ]		satisfied;
-
-	private volatile boolean	running	= false;
-
-	public AILogic(final Grid g) {
-
-		grid = g;
-
-		setName("AI");
-		setPriority(MIN_PRIORITY + 1);
-	}
-
-	private void cooldown( ) {
+	private static void cooldown( ) {
 
 		try {
 			Thread.sleep(125);
@@ -30,6 +17,32 @@ public class AILogic extends Thread {
 			e.printStackTrace( );
 		}
 
+	}
+
+	public static void halt( ) {
+
+		running = false;
+	}
+
+	public static boolean isRunning( ) {
+
+		return running;
+	}
+
+	private final Grid		grid;
+
+	private boolean			started			= false;
+
+	private boolean[ ][ ]	satisfied;
+
+	private long			totalRuntime	= 0;
+
+	public AILogic(final Grid g) {
+
+		grid = g;
+
+		setName("AI");
+		setPriority(MIN_PRIORITY + 1);
 	}
 
 	private byte flagsUsed(final Tile[ ] list) {
@@ -41,11 +54,6 @@ public class AILogic extends Thread {
 			}
 		}
 		return flagged;
-	}
-
-	public void halt( ) {
-
-		running = false;
 	}
 
 	private byte hiddenIn(final Tile[ ] list) {
@@ -63,23 +71,21 @@ public class AILogic extends Thread {
 
 		if (started) return;
 
-		final int rX = (int) (Math.random( ) * grid.sizeX( )) / 2;
-		final int rY = (int) (Math.random( ) * grid.sizeY( ));
+		Tile.Type clickedOn = Tile.Type.UNSET;
+		while (clickedOn != Tile.Type.EMPTY) {
+			final int rX = (int) (Math.random( ) * grid.sizeX( )) / 2;
+			final int rY = (int) (Math.random( ) * grid.sizeY( )) / 2;
 
-		grid.onClick(grid.tileAt(rX, rY), false);
+			grid.onClick(grid.tileAt(rX, rY), false);
 
-		if (grid.tileAt(rX, rY).getType( ) == Tile.Type.NUMBER) {
-			init( );
+			clickedOn = grid.tileAt(rX, rY).getType( );
 		}
 
 		satisfied = new boolean[grid.sizeX( )][grid.sizeY( )];
 
 		started = true;
-	}
 
-	public boolean isRunning( ) {
-
-		return running;
+		System.out.println("AI initialized");
 	}
 
 	private byte minesVisible(final Tile[ ] list) {
@@ -95,8 +101,11 @@ public class AILogic extends Thread {
 
 	private void process( ) {
 
-		if (grid.percentComplete( ) >= 100) return;
-		if (!started) {
+		if (grid.percentComplete( ) >= 100) {
+			System.out.println("Total Runtime: " + totalRuntime + "ms (" + (totalRuntime / 1000) + "s)");
+			running = false;
+			return;
+		} else if (!started) {
 			init( );
 		}
 
@@ -107,7 +116,7 @@ public class AILogic extends Thread {
 
 				final Tile t = grid.tileAt(x, y);
 
-				if (!t.isHidden( ) && (t.getType( ) == Tile.Type.NUMBER) && !satisfied[x][y]) {
+				if (t.isVisible( ) && (t.getType( ) == Tile.Type.NUMBER) && !satisfied[x][y]) {
 
 					grid.setHighLight(t);
 
@@ -115,10 +124,15 @@ public class AILogic extends Thread {
 					final Tile[ ] neighbors = grid.neighbors(x, y);
 					final byte hiddenMines = (byte) (minesInNeighbors - minesVisible(neighbors));
 					final byte hiddenTiles = hiddenIn(neighbors);
+					final byte flagsUsed = flagsUsed(neighbors);
 
-					if (flagsUsed(neighbors) == minesInNeighbors) {
+					if (MineSweeper.debug) {
+						System.out.println("(" + x + ", " + y + "): Mines=" + minesInNeighbors + ", Hidden Mines=" + hiddenMines + ", Hidden Tiles=" + hiddenTiles + ", Flags Used=" + flagsUsed);
+					}
+
+					if (flagsUsed == minesInNeighbors) {
 						for (final Tile n : neighbors) {
-							if ((n != null) && (!n.isFlagged( ) || !n.isHidden( ))) {
+							if ((n != null) && !n.isFlagged( ) && n.isHidden( )) {
 								grid.onClick(n, false);
 								cooldown( );
 							}
@@ -136,8 +150,9 @@ public class AILogic extends Thread {
 				}
 			}
 		}
-
+		totalRuntime += (System.currentTimeMillis( ) - startTime);
 		System.out.println("AI completed 1 scan in " + (System.currentTimeMillis( ) - startTime) + "ms");
+		cooldown( );
 	}
 
 	@Override
