@@ -37,12 +37,8 @@ public class Input implements MouseListener, MouseMotionListener, KeyListener {
 	@Override
 	public void keyPressed(final KeyEvent e) {
 
-		System.out.println("Key Pressed: " + e.getKeyChar( ) + " in Thread " + Thread.currentThread( ).getName( ));
-
 		if (e.getKeyCode( ) == KeyEvent.VK_A) {
-			if (!MineSweeper.getAI( ).isRunning( )) {
-				MineSweeper.getAI( ).start( );
-			}
+			MineSweeper.toggleAI( );
 		}
 	}
 
@@ -52,17 +48,21 @@ public class Input implements MouseListener, MouseMotionListener, KeyListener {
 	}
 
 	@Override
-	public void keyTyped(final KeyEvent arg0) {
+	public void keyTyped(final KeyEvent e) {
 
 	}
 
 	@Override
 	public void mouseClicked(final MouseEvent e) {
 
+<<<<<<< HEAD
 		//System.out.println("In Thread " + Thread.currentThread( ).getName( ));
 		int x = e.getX( ), y = e.getY( );
 
 		g.onClick(x, y, e.getButton( ) != MouseEvent.BUTTON1);
+=======
+		g.onClick(e.getX( ), e.getY( ), e.getButton( ) != MouseEvent.BUTTON1);
+>>>>>>> 651512319e650ae48754f4ee7678bafc4857297f
 
 	}
 

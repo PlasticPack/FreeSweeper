@@ -5,6 +5,7 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 
+import nick.sweeper.ai.AILogic;
 import nick.sweeper.main.Tile.Type;
 
 public class Grid {
@@ -17,7 +18,7 @@ public class Grid {
 	/**
 	 * The pixel height of each square
 	 */
-	public static final short	squareDrawSize	= 40;
+	public static final short	squareDrawSize	= 35;
 
 	public static final boolean	drawHighlight	= true;
 
@@ -224,15 +225,23 @@ public class Grid {
 		final int tY = ((pY + rendMidY( )) - yOff) / squareDrawSize;
 
 		final Tile s = tileAt(tX, tY);
+<<<<<<< HEAD
 		
 		if(s!=null)
 		onClick(s, flag);
+=======
+
+		if (s != null) {
+			onClick(s, flag);
+		}
+>>>>>>> 651512319e650ae48754f4ee7678bafc4857297f
 	}
 
 	public void onClick(final Tile s, final boolean flag) {
 
-		// System.out.println("Click on (" + s.getX( ) + ", " + s.getY( ) + "). Type: " + s.getType(
-		// ) + " | Flag: " + flag);
+		if (MineSweeper.debug) {
+			System.out.println("Click on (" + s.getX( ) + ", " + s.getY( ) + "). | Flag: " + flag);
+		}
 
 		if (s.isHidden( )) {
 			if (flag) {
@@ -249,6 +258,7 @@ public class Grid {
 				if (!s.isFlagged( )) {
 
 					if (s.getType( ) == Type.MINE) {
+						System.out.println(s.getX( ) + ", " + s.getY( ) + " is a mine");
 						hitMine = true;
 					}
 					clearEmptyNeighbors(s);
@@ -347,7 +357,7 @@ System.out.println(x+", "+y);
 			final int tX = ((mX + midX) - xOff) / squareDrawSize;
 			final int tY = ((mY + midY) - yOff) / squareDrawSize;
 
-			if ((tileAt(tX, tY) != null) && !MineSweeper.getAI( ).isRunning( )) {
+			if ((tileAt(tX, tY) != null) && !AILogic.isRunning( )) {
 				setHighLight(tileAt(tX, tY));
 			}
 		}

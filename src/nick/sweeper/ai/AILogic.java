@@ -1,33 +1,48 @@
 package nick.sweeper.ai;
 
 import nick.sweeper.main.Grid;
+import nick.sweeper.main.MineSweeper;
 import nick.sweeper.main.Tile;
 
-public class AILogic implements Runnable {
+public class AILogic extends Thread {
 
-	private final Grid			grid;
+	private static volatile boolean running = false;
 
-	private boolean				started	= false;
+	private static void cooldown( ) {
 
-	private boolean[ ][ ]		satisfied;
+		try {
+			Thread.sleep(125);
+		} catch (InterruptedException e) {
+			System.out.println("Failed to sleep!");
+			e.printStackTrace( );
+		}
 
-	private volatile boolean	running	= false;
+	}
 
-	private Thread				aiThread;
+	public static void halt( ) {
+
+		running = false;
+	}
+
+	public static boolean isRunning( ) {
+
+		return running;
+	}
+
+	private final Grid		grid;
+
+	private boolean			started			= false;
+
+	private boolean[ ][ ]	satisfied;
+
+	private long			totalRuntime	= 0;
 
 	public AILogic(final Grid g) {
 
 		grid = g;
-	}
 
-	private void cooldown( ) throws InterruptedException {
-
-		Thread.sleep(125);
-		synchronized (this) {
-			while (!running) {
-				wait( );
-			}
-		}
+		setName("AI");
+		setPriority(MIN_PRIORITY + 1);
 	}
 
 	private byte flagsUsed(final Tile[ ] list) {
@@ -52,27 +67,25 @@ public class AILogic implements Runnable {
 		return hidden;
 	}
 
-	private void init( ) {
+	public void init( ) {
 
 		if (started) return;
 
-		final int rX = (int) (Math.random( ) * grid.sizeX( )) / 2;
-		final int rY = (int) (Math.random( ) * grid.sizeY( ));
+		Tile.Type clickedOn = Tile.Type.UNSET;
+		while (clickedOn != Tile.Type.EMPTY) {
+			final int rX = (int) (Math.random( ) * grid.sizeX( )) / 2;
+			final int rY = (int) (Math.random( ) * grid.sizeY( )) / 2;
 
-		grid.onClick(grid.tileAt(rX, rY), false);
+			grid.onClick(grid.tileAt(rX, rY), false);
 
-		if (grid.tileAt(rX, rY).getType( ) == Tile.Type.NUMBER) {
-			init( );
+			clickedOn = grid.tileAt(rX, rY).getType( );
 		}
 
 		satisfied = new boolean[grid.sizeX( )][grid.sizeY( )];
 
 		started = true;
-	}
 
-	public boolean isRunning( ) {
-
-		return running;
+		System.out.println("AI initialized");
 	}
 
 	private byte minesVisible(final Tile[ ] list) {
@@ -86,80 +99,46 @@ public class AILogic implements Runnable {
 		return minesVisible;
 	}
 
-	public synchronized void pause( ) {
+	private void process( ) {
 
-		System.out.println("Pausing...");
-		running = false;
-		aiThread.interrupt( );
-		aiThread = null;
-	}
-
-	@Override
-	public void run( ) {
-
-		init( );
-
-		while (true) {
-			try {
-				Thread.sleep(500);
-				if (!running) {
-					synchronized (this) {
-						while (!running) {
-							wait( );
-						}
-					}
-				}
-				update( );
-			} catch (InterruptedException e) {
-				e.printStackTrace( );
-			}
-		}
-
-	}
-
-	public synchronized void start( ) {
-
-		if (running) return;
-		running = true;
-		aiThread = new Thread(this, "AI");
-		System.out.println("Starting...");
-		aiThread.start( );
-	}
-
-	private void update( ) throws InterruptedException {
-
-		if (!started) {
+		if (grid.percentComplete( ) >= 100) {
+			System.out.println("Total Runtime: " + totalRuntime + "ms (" + (totalRuntime / 1000) + "s)");
+			running = false;
+			return;
+		} else if (!started) {
 			init( );
 		}
 
-		if (grid.percentComplete( ) >= 100) return;
+		final long startTime = System.currentTimeMillis( );
 
 		for (int x = 0; x < grid.sizeX( ); x++) {
 			for (int y = 0; y < grid.sizeY( ); y++) {
 
 				final Tile t = grid.tileAt(x, y);
 
-				if (!t.isHidden( ) && (t.getType( ) == Tile.Type.NUMBER) && !satisfied[x][y]) {
+				if (t.isVisible( ) && (t.getType( ) == Tile.Type.NUMBER) && !satisfied[x][y]) {
 
 					grid.setHighLight(t);
 
 					final byte minesInNeighbors = Byte.parseByte(t.getDisplayNum( ));
 					final Tile[ ] neighbors = grid.neighbors(x, y);
+					final byte hiddenMines = (byte) (minesInNeighbors - minesVisible(neighbors));
+					final byte hiddenTiles = hiddenIn(neighbors);
+					final byte flagsUsed = flagsUsed(neighbors);
 
-					if (flagsUsed(neighbors) == minesInNeighbors) {
+					if (MineSweeper.debug) {
+						System.out.println("(" + x + ", " + y + "): Mines=" + minesInNeighbors + ", Hidden Mines=" + hiddenMines + ", Hidden Tiles=" + hiddenTiles + ", Flags Used=" + flagsUsed);
+					}
+
+					if (flagsUsed == minesInNeighbors) {
 						for (final Tile n : neighbors) {
-							if ((n != null) && (!n.isFlagged( ) || !n.isHidden( ))) {
+							if ((n != null) && !n.isFlagged( ) && n.isHidden( )) {
 								grid.onClick(n, false);
 								cooldown( );
 							}
 						}
 						satisfied[x][y] = true;
-					}
-
-					final byte hiddenMines = (byte) (minesInNeighbors - minesVisible(neighbors));
-					final byte hiddenTiles = hiddenIn(neighbors);
-
-					if (hiddenMines == hiddenTiles) {
+					} else if (hiddenMines == hiddenTiles) {
 						for (Tile n : neighbors) {
 							if ((n != null) && !n.isFlagged( ) && n.isHidden( )) {
 								grid.onClick(n, true);
@@ -170,6 +149,18 @@ public class AILogic implements Runnable {
 					}
 				}
 			}
+		}
+		totalRuntime += (System.currentTimeMillis( ) - startTime);
+		System.out.println("AI completed 1 scan in " + (System.currentTimeMillis( ) - startTime) + "ms");
+		cooldown( );
+	}
+
+	@Override
+	public void run( ) {
+
+		running = true;
+		while (running) {
+			process( );
 		}
 	}
 

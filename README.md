@@ -13,7 +13,9 @@ Free Open Source Minesweeper
 ## Controls
 * Left Click to Reveal Tile 
 * Right Click to Flag Tile
+* Press 'a' to engage the AI
 
 ## Notes
-Auto closes upon loss.
+Auto closes after 2 seconds upon loss.
 Stays open on win.
+Enabling the AI takes control from the player.

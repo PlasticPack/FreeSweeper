@@ -92,6 +92,16 @@ public final class Tile {
 		return hidden;
 	}
 
+	public boolean isKnown( ) {
+
+		return isVisible( ) || isFlagged( );
+	}
+
+	public boolean isVisible( ) {
+
+		return !isHidden( );
+	}
+
 	public void render(final Graphics g, final int pX, final int pY, final short size) {
 
 		if (hidden) {
