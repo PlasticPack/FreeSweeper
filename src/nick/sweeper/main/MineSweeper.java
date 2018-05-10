@@ -12,7 +12,7 @@ public final class MineSweeper extends Canvas implements Runnable {
 
 	private static final long			serialVersionUID	= 1L;
 
-	public static final short			height				= 25, width = 30, numMines = 90;
+	public static final short			height				= 25, width = 25, numMines = 90;
 
 	private static JFrame				frame;
 
