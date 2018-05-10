@@ -225,10 +225,16 @@ public class Grid {
 		final int tY = ((pY + rendMidY( )) - yOff) / squareDrawSize;
 
 		final Tile s = tileAt(tX, tY);
+<<<<<<< HEAD
+		
+		if(s!=null)
+		onClick(s, flag);
+=======
 
 		if (s != null) {
 			onClick(s, flag);
 		}
+>>>>>>> 651512319e650ae48754f4ee7678bafc4857297f
 	}
 
 	public void onClick(final Tile s, final boolean flag) {
@@ -305,7 +311,7 @@ public class Grid {
 	}
 
 	public void setOffsets(final int x, final int y) {
-
+System.out.println(x+", "+y);
 		xOff = x;
 		yOff = y;
 	}

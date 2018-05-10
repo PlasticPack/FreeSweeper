@@ -55,7 +55,14 @@ public class Input implements MouseListener, MouseMotionListener, KeyListener {
 	@Override
 	public void mouseClicked(final MouseEvent e) {
 
+<<<<<<< HEAD
+		//System.out.println("In Thread " + Thread.currentThread( ).getName( ));
+		int x = e.getX( ), y = e.getY( );
+
+		g.onClick(x, y, e.getButton( ) != MouseEvent.BUTTON1);
+=======
 		g.onClick(e.getX( ), e.getY( ), e.getButton( ) != MouseEvent.BUTTON1);
+>>>>>>> 651512319e650ae48754f4ee7678bafc4857297f
 
 	}
 

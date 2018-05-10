@@ -124,6 +124,7 @@ public final class MineSweeper extends Canvas implements Runnable {
 		while (isRunning) {
 
 			while ((lastUpdate + delta) < System.currentTimeMillis( )) {
+				System.out.println("Update");
 				update( );
 				lastUpdate += delta;
 				++ups;
