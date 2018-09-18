@@ -1,4 +1,4 @@
-# MineSweeper
+# FreeSweeper
 Free Open Source Minesweeper
 
 ## Parameters
