@@ -307,7 +307,7 @@ public class Grid {
 
 	public void setOffsets(final int x, final int y) {
 
-		System.out.println(x + ", " + y);
+		// System.out.println(x + ", " + y);
 		xOff = x;
 		yOff = y;
 	}

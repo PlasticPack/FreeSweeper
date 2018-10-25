@@ -26,7 +26,7 @@ public final class MineSweeper extends Canvas implements Runnable {
 
 	private static final Thread			thread				= new Thread(game, "Main Thread");
 
-	public static final String			name				= "MineSweeper v1.2b";
+	public static final String			name				= "FreeSweeper v1.2c";
 
 	private static final Input			input				= new Input(grid);
 
@@ -123,8 +123,8 @@ public final class MineSweeper extends Canvas implements Runnable {
 
 		while (isRunning) {
 
-			while ((lastUpdate + delta) < System.currentTimeMillis( )) {
-				System.out.println("Update");
+			if ((lastUpdate + delta) < System.currentTimeMillis( )) {
+				// System.out.println("Update");
 				update( );
 				lastUpdate += delta;
 				++ups;
@@ -141,8 +141,7 @@ public final class MineSweeper extends Canvas implements Runnable {
 				final String basePrint = name + " (" + grid.sizeX( ) + ", " + grid.sizeY( ) + ") | Flags Used: " + grid.flagsUsed( ) + " | Mines: " + grid.numMines( ) + " | " + String.format("%.2f", grid.percentComplete( )) + "% Complete | AI Engaged: " + ai.isAlive( );
 
 				if (debug) {
-					final String lastSec = " | UPS: " + ups + " | FPS: " + fps;
-					frame.setTitle(basePrint + lastSec);
+					frame.setTitle(basePrint + " | UPS: " + ups + " | FPS: " + fps);
 				} else {
 					frame.setTitle(basePrint);
 				}
