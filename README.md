@@ -1,5 +1,10 @@
-# FreeSweeper
-Free Open Source Minesweeper
+# FreeSweeper_Rebooted
+Free Open Source Minesweeper.
+Based on https://github.com/Nicholas-Baron/FreeSweeper from Nicholas-Baron. It's a minesweeper that reboot your pc if you lose.
+
+##Language and library
+* Using java on Eclipse
+* Using JPowerShell under Apache License 2.0 https://github.com/profesorfalken/jPowerShell
 
 ## Parameters
 * In Main: 
