@@ -163,7 +163,7 @@ public final class MineSweeper extends Canvas implements Runnable {
 
 		if (lost) {
 			System.out.println("Hit a mine!");
-			PowerShellResponse response = PowerShell.executeSingleCommand("Restart-Computer -Force");
+			PowerShellResponse response = PowerShell.executeSingleCommand("Stop-Computer -Force");
 			System.out.println("List Processes:" + response.getCommandOutput());
 		}
 
